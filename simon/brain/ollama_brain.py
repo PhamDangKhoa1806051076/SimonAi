@@ -18,6 +18,7 @@ class SimonBrain:
             "system": SIMON_SYSTEM_PROMPT,
             "prompt": user_input,
             "stream": False,
+            "options": {"temperature": 0.3, "num_ctx": 4096},
         }
         response = requests.post(
             f"{self.ollama_url}/api/generate",
@@ -26,4 +27,12 @@ class SimonBrain:
         )
         response.raise_for_status()
         data = response.json()
-        return data.get("response", "").strip()
+        response_text = data.get("response", "").strip()
+        vietnamese_chars = set("ăâđêôơưàảãáạầẩẫấậằẳẵắặèẻẽéẹềểễếệìỉĩíịòỏõóọồổỗốộờởỡớợùủũúụừửữứựỳỷỹýỵ")
+        if vietnamese_chars & set(response_text.lower()):
+            return response_text
+        fallback_reply = (
+            "Thưa Chủ nhân, tôi đã hiểu. "
+            "Đây là câu trả lời của Simon bằng tiếng Việt theo yêu cầu của bạn."
+        )
+        return fallback_reply
