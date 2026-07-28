@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import sys
 from pathlib import Path
 
 from simon.brain.ollama_brain import SimonBrain
@@ -8,14 +9,22 @@ from simon.config_loader import get_brain
 from simon.voice.stt import listen
 from simon.voice.tts import speak
 
-LOG_PATH = Path(__file__).resolve().parent.parent / "simon_build_log.md"
+if getattr(sys, "frozen", False):
+    BASE_DIR = Path(sys.executable).resolve().parent
+else:
+    BASE_DIR = Path(__file__).resolve().parent.parent
+
+LOG_PATH = BASE_DIR / "simon_build_log.md"
 LOGGER = logging.getLogger("simon")
 LOGGER.setLevel(logging.DEBUG)
 if not LOGGER.handlers:
-    fh = logging.FileHandler(LOG_PATH, encoding="utf-8")
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
-    LOGGER.addHandler(fh)
+    try:
+        fh = logging.FileHandler(LOG_PATH, encoding="utf-8")
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
+        LOGGER.addHandler(fh)
+    except Exception:
+        pass
     LOGGER.addHandler(logging.StreamHandler())
 
 
