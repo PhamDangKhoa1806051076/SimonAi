@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.venv/
+venv/
+.env.local
+.ollama/
+*.mp3
+*.wav
+chroma_db/
+build/
+dist/
+*.egg-info/

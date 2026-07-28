@@ -1,0 +1,11 @@
+ollama
+edge-tts
+SpeechRecognition
+pyttsx3
+requests
+pyautogui
+chromadb
+opencv-python
+websockets
+pydantic
+pyyaml
