@@ -40,9 +40,9 @@ async def main_async(voice_mode: bool = False) -> None:
 
     cfg = load_config()
     openai_cfg = cfg.get("openai", {})
+    client, model = get_brain()
     brain = SimonBrain(
-        api_key=openai_cfg.get("api_key", ""),
-        base_url=openai_cfg.get("base_url", "https://api.openai.com/v1"),
+        client=client,
         model=openai_cfg.get("model", "gpt-4o-mini"),
     )
     build_log("Brain init", f"model={brain.model} base={openai_cfg.get('base_url', 'https://api.openai.com/v1')}")

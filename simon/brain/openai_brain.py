@@ -6,8 +6,8 @@ from simon.brain.simon_prompt import SIMON_SYSTEM_PROMPT
 
 
 class SimonBrain:
-    def __init__(self, api_key: str, base_url: str, model: str, timeout: int = 60):
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
+    def __init__(self, client: OpenAI, model: str, timeout: int = 60):
+        self.client = client
         self.model = model
         self.timeout = timeout
 

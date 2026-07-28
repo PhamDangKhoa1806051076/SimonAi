@@ -11,7 +11,22 @@ Local AI assistant inspired by JARVIS, built with a 100% free/open-source stack.
 
 ## Quick start
 
-1. Set API key and model in `config/settings.yaml`
-2. Create virtual environment
-3. Install dependencies: `pip install -r requirements.txt`
-4. Run: `python -m simon.main`
+1. Install dependencies: `pip install -r requirements.txt`
+2. Configure secrets via `.env` or environment variables (recommended) or `config/settings.yaml`
+3. Run: `python -m simon.main`
+
+### Config precedence (highest wins)
+
+1. Environment variables:
+   - `SIMON_OPENAI_API_KEY`
+   - `SIMON_OPENAI_BASE_URL`
+   - `SIMON_OPENAI_MODEL`
+2. `.env` file in project root
+3. `config/settings.yaml`
+
+Example `.env`:
+```
+SIMON_OPENAI_API_KEY=sk-...
+SIMON_OPENAI_BASE_URL=https://api.groq.com/openai/v1
+SIMON_OPENAI_MODEL=llama-3.3-70b-versatile
+```

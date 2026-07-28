@@ -12,4 +12,4 @@ pyyaml
 pyinstaller
 pyaudio
 numpy
-openai
+python-dotenv
