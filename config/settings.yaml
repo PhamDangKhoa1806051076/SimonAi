@@ -1,0 +1,15 @@
+ollama:
+  url: "http://localhost:11434/api/generate"
+  model: "qwen2.5:3b"
+
+voice:
+  tts_voice: "vi-VN-SimonNeural"
+  stt_language: "vi-VN"
+
+memory:
+  persist_directory: "chroma_db"
+  collection_name: "simon_memory"
+
+home_assistant:
+  base_url: "http://localhost:8123"
+  token: ""
