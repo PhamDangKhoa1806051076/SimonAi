@@ -1,4 +1,4 @@
-ollama
+openai
 edge-tts
 SpeechRecognition
 pyttsx3
@@ -10,3 +10,6 @@ websockets
 pydantic
 pyyaml
 pyinstaller
+pyaudio
+numpy
+openai

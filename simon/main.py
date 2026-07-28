@@ -4,8 +4,9 @@ import os
 import sys
 from pathlib import Path
 
-from simon.brain.ollama_brain import SimonBrain
-from simon.config_loader import get_brain
+from openai import OpenAI
+from simon.brain.openai_brain import SimonBrain
+from simon.config_loader import load_config
 from simon.voice.stt import listen
 from simon.voice.tts import speak
 
@@ -37,8 +38,14 @@ async def main_async(voice_mode: bool = False) -> None:
     build_log("GitHub remote", "https://github.com/PhamDangKhoa1806051076/SimonAi.git")
     build_log("Voice 2-way added", "Edge-TTS + SpeechRecognition")
 
-    brain: SimonBrain = get_brain()
-    build_log("Brain init", f"Ollama URL={brain.ollama_url} model={brain.model}")
+    cfg = load_config()
+    openai_cfg = cfg.get("openai", {})
+    brain = SimonBrain(
+        api_key=openai_cfg.get("api_key", ""),
+        base_url=openai_cfg.get("base_url", "https://api.openai.com/v1"),
+        model=openai_cfg.get("model", "gpt-4o-mini"),
+    )
+    build_log("Brain init", f"model={brain.model} base={openai_cfg.get('base_url', 'https://api.openai.com/v1')}")
 
     build_log("Main loop started", f"voice_mode={voice_mode}")
     try:

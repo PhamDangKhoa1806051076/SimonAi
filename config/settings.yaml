@@ -1,6 +1,7 @@
-ollama:
-  url: "http://localhost:11434/api/generate"
-  model: "qwen2.5:3b"
+openai:
+  api_key: "YOUR_API_KEY"
+  base_url: "https://api.openai.com/v1"
+  model: "gpt-4o-mini"
 
 voice:
   tts_voice: "vi-VN-SimonNeural"

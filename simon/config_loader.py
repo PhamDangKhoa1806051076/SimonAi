@@ -1,11 +1,8 @@
-import asyncio
-import logging
 import sys
 from pathlib import Path
 
 import yaml
-
-from simon.brain.ollama_brain import SimonBrain
+from openai import OpenAI
 
 if getattr(sys, "frozen", False):
     BASE_DIR = Path(sys.executable).resolve().parent
@@ -20,14 +17,16 @@ else:
 
 
 def load_config() -> dict:
+    if not CONFIG_PATH.exists():
+        return {}
     with open(CONFIG_PATH, "r", encoding="utf-8") as file:
         return yaml.safe_load(file) or {}
 
 
-def get_brain() -> SimonBrain:
+def get_brain():
     cfg = load_config()
-    ollama_cfg = cfg.get("ollama", {})
-    return SimonBrain(
-        ollama_url=ollama_cfg.get("url", "http://localhost:11434/api/generate"),
-        model=ollama_cfg.get("model", "qwen2.5:3b"),
+    openai_cfg = cfg.get("openai", {})
+    return OpenAI(
+        api_key=openai_cfg.get("api_key", ""),
+        base_url=openai_cfg.get("base_url", "https://api.openai.com/v1"),
     )

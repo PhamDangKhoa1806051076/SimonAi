@@ -2,7 +2,7 @@
 
 Local AI assistant inspired by JARVIS, built with a 100% free/open-source stack.
 
-- Brain: Ollama local model (e.g. qwen2.5:3b)
+- Brain: OpenAI-compatible API (OpenAI, Groq, OpenRouter, etc.)
 - Voice: Edge-TTS + SpeechRecognition
 - Control: PyAutoGUI / OS automation
 - Memory: ChromaDB
@@ -11,7 +11,7 @@ Local AI assistant inspired by JARVIS, built with a 100% free/open-source stack.
 
 ## Quick start
 
-1. Install Ollama and pull model: `ollama pull qwen2.5:3b`
+1. Set API key and model in `config/settings.yaml`
 2. Create virtual environment
 3. Install dependencies: `pip install -r requirements.txt`
 4. Run: `python -m simon.main`
