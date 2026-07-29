@@ -16,9 +16,21 @@ async def _synthesize_to_file(text: str, output_file: Path) -> None:
     await communicate.save(str(output_file))
 
 
+def _run_async(coro):
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    import concurrent.futures
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(asyncio.run, coro)
+        return future.result()
+
+
 def speak(text: str) -> None:
     output_file = Path(tempfile.gettempdir()) / "simon_voice_output.mp3"
-    asyncio.run(_synthesize_to_file(text, output_file))
+    _run_async(_synthesize_to_file(text, output_file))
     if os.name == "nt":
         os.system(f"start /min wmplayer \"{output_file}\"")
     else:
