@@ -44,7 +44,33 @@ def create_brain() -> SimonBrain:
     brain = SimonBrain(client=client, model=model)
     base_url = cfg.get("openai", {}).get("base_url", "https://api.openai.com/v1")
     build_log("Brain init", f"model={model} base={base_url}")
+    _validate_api_key(client, base_url, model, cfg)
     return brain
+
+
+def _validate_api_key(client, base_url: str, model: str, cfg: dict) -> None:
+    openai_cfg = cfg.get("openai", {})
+    api_key = openai_cfg.get("api_key", "")
+    if not api_key or api_key == "YOUR_API_KEY":
+        print("[Simon] Chưa cấu hình API key trong file .env hoặc settings.yaml.")
+        return
+    try:
+        completion = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": "Reply OK only."},
+                {"role": "user", "content": "Hey"},
+            ],
+            max_tokens=2,
+            timeout=20,
+        )
+        reply = (completion.choices[0].message.content or "").strip()
+        print(f"[Simon] API key hợp lệ. Model phản hồi: {reply}")
+        build_log("API key validation", f"base={base_url} model={model} reply={reply}")
+    except Exception as exc:
+        print(f"[Simon] API key không hợp lệ hoặc kết nối thất bại: {exc}")
+        LOGGER.warning("API key validation failed: %s", exc)
+        build_log("API key validation failed", str(exc))
 
 
 async def main_async(voice_mode: bool = False) -> None:

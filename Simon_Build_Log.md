@@ -29,3 +29,5 @@
 - Updated TTS to use English or Vietnamese voice based on current language
 - Updated STT to listen with correct language setting
 - Extended `SimonBrain.ask()` to manage and report current language
+- Added API key validation on startup in `simon/main.py`
+- Documented API key rotation reminder in build log
