@@ -6,7 +6,7 @@ from pathlib import Path
 
 from openai import OpenAI
 from simon.brain.openai_brain import SimonBrain
-from simon.config_loader import load_config
+from simon.config_loader import get_brain, load_config
 from simon.voice.stt import listen
 from simon.voice.tts import speak
 
@@ -14,6 +14,12 @@ if getattr(sys, "frozen", False):
     BASE_DIR = Path(sys.executable).resolve().parent
 else:
     BASE_DIR = Path(__file__).resolve().parent.parent
+
+if sys.stdout:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 LOG_PATH = BASE_DIR / "simon_build_log.md"
 LOGGER = logging.getLogger("simon")
@@ -39,13 +45,13 @@ async def main_async(voice_mode: bool = False) -> None:
     build_log("Voice 2-way added", "Edge-TTS + SpeechRecognition")
 
     cfg = load_config()
-    openai_cfg = cfg.get("openai", {})
     client, model = get_brain()
     brain = SimonBrain(
         client=client,
-        model=openai_cfg.get("model", "gpt-4o-mini"),
+        model=model,
     )
-    build_log("Brain init", f"model={brain.model} base={openai_cfg.get('base_url', 'https://api.openai.com/v1')}")
+    base_url = cfg.get("openai", {}).get("base_url", "https://api.openai.com/v1")
+    build_log("Brain init", f"model={model} base={base_url}")
 
     build_log("Main loop started", f"voice_mode={voice_mode}")
     try:
