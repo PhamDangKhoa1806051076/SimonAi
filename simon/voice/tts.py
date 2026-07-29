@@ -7,12 +7,16 @@ import edge_tts
 
 from simon.config_loader import load_config
 
+VOICE_VI = load_config().get("voice", {}).get("tts_voice", "vi-VN-SimonNeural")
+VOICE_EN = load_config().get("voice", {}).get("tts_voice_en", "en-US-GuyNeural")
 
-VOICE = load_config().get("voice", {}).get("tts_voice", "vi-VN-SimonNeural")
+
+def get_voice(language: str = "vi") -> str:
+    return VOICE_EN if language == "en" else VOICE_VI
 
 
-async def _synthesize_to_file(text: str, output_file: Path) -> None:
-    communicate = edge_tts.Communicate(text, VOICE)
+async def _synthesize_to_file(text: str, output_file: Path, voice: str) -> None:
+    communicate = edge_tts.Communicate(text, voice)
     await communicate.save(str(output_file))
 
 
@@ -28,9 +32,10 @@ def _run_async(coro):
         return future.result()
 
 
-def speak(text: str) -> None:
+def speak(text: str, language: str = "vi") -> None:
     output_file = Path(tempfile.gettempdir()) / "simon_voice_output.mp3"
-    _run_async(_synthesize_to_file(text, output_file))
+    voice = get_voice(language)
+    _run_async(_synthesize_to_file(text, output_file, voice))
     if os.name == "nt":
         os.system(f"start /min wmplayer \"{output_file}\"")
     else:

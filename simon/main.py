@@ -52,8 +52,9 @@ async def main_async(voice_mode: bool = False) -> None:
     brain = create_brain()
     try:
         while True:
+            language = brain.current_language
             if voice_mode:
-                user_input = listen()
+                user_input = listen(language=language)
             else:
                 user_input = input("Bạn: ").strip()
             if not user_input:
@@ -68,7 +69,7 @@ async def main_async(voice_mode: bool = False) -> None:
                 build_log("User input", user_input)
                 build_log("Simon reply", reply)
                 if voice_mode:
-                    speak(reply)
+                    speak(reply, language=brain.current_language)
             except Exception as exc:
                 LOGGER.exception("Brain request failed")
                 build_log("Brain error", str(exc))

@@ -22,3 +22,10 @@
 - Added voice toggle and threaded brain/TTS execution in GUI
 - Confirmed voice mode works with Groq API using Vietnamese replies
 - Removed raw runtime log spam from build log
+
+## 2026-07-29 update
+- Added bilingual Vietnamese/English support in brain prompt
+- Added language switching via voice/text ("switch to english", "chuyển sang tiếng Anh", etc.)
+- Updated TTS to use English or Vietnamese voice based on current language
+- Updated STT to listen with correct language setting
+- Extended `SimonBrain.ask()` to manage and report current language

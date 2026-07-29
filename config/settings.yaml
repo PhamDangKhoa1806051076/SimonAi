@@ -5,7 +5,10 @@ openai:
 
 voice:
   tts_voice: "vi-VN-SimonNeural"
+  tts_voice_en: "en-US-GuyNeural"
   stt_language: "vi-VN"
+  stt_language_en: "en-US"
+  current_language: "vi"
 
 memory:
   persist_directory: "chroma_db"
