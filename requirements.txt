@@ -13,3 +13,4 @@ pyinstaller
 pyaudio
 numpy
 python-dotenv
+customtkinter

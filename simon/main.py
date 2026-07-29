@@ -4,7 +4,6 @@ import os
 import sys
 from pathlib import Path
 
-from openai import OpenAI
 from simon.brain.openai_brain import SimonBrain
 from simon.config_loader import get_brain, load_config
 from simon.voice.stt import listen
@@ -39,21 +38,18 @@ def build_log(title: str, content: str = "") -> None:
     LOGGER.info("BUILD_LOG: %s | %s", title, content.replace("\n", " ") if content else "-")
 
 
-async def main_async(voice_mode: bool = False) -> None:
-    build_log("Project scaffold", "Folder structure, brain prompt, config loader")
-    build_log("GitHub remote", "https://github.com/PhamDangKhoa1806051076/SimonAi.git")
-    build_log("Voice 2-way added", "Edge-TTS + SpeechRecognition")
-
+def create_brain() -> SimonBrain:
     cfg = load_config()
     client, model = get_brain()
-    brain = SimonBrain(
-        client=client,
-        model=model,
-    )
+    brain = SimonBrain(client=client, model=model)
     base_url = cfg.get("openai", {}).get("base_url", "https://api.openai.com/v1")
     build_log("Brain init", f"model={model} base={base_url}")
+    return brain
 
+
+async def main_async(voice_mode: bool = False) -> None:
     build_log("Main loop started", f"voice_mode={voice_mode}")
+    brain = create_brain()
     try:
         while True:
             if voice_mode:
@@ -83,8 +79,23 @@ async def main_async(voice_mode: bool = False) -> None:
 
 
 if __name__ == "__main__":
+    print("Chọn chế độ (1: Text, 2: Voice, 3: GUI)")
     try:
-        mode = input("Chọn chế độ (1: Text, 2: Voice): ").strip() == "2"
+        mode = input("Chọn: ").strip()
     except Exception:
-        mode = False
-    asyncio.run(main_async(voice_mode=mode))
+        mode = "1"
+
+    brain = create_brain()
+
+    if mode == "3":
+        try:
+            from simon.gui.app import launch_gui
+            launch_gui(brain)
+        except Exception as exc:
+            LOGGER.exception("GUI failed")
+            print("Không thể khởi chạy GUI, đang chuyển về text mode...")
+            asyncio.run(main_async(voice_mode=False))
+    elif mode == "2":
+        asyncio.run(main_async(voice_mode=True))
+    else:
+        asyncio.run(main_async(voice_mode=False))
