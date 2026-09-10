@@ -3,17 +3,31 @@ openai:
   base_url: "https://api.openai.com/v1"
   model: "gpt-4o-mini"
 
+system:
+  user_name: "Chủ nhân"
+  assistant_name: "Simon"
+  log_level: "INFO"
+
 voice:
-  tts_voice: "vi-VN-SimonNeural"
+  tts_voice: "vi-VN-NamMinhNeural"
   tts_voice_en: "en-US-GuyNeural"
   stt_language: "vi-VN"
   stt_language_en: "en-US"
   current_language: "vi"
+  wake_word: "simon"
+  wake_word_threshold: 1500
 
 memory:
   persist_directory: "chroma_db"
   collection_name: "simon_memory"
+  auto_recall: true
+
+vision:
+  enabled: false
+  camera_index: 0
+  cooldown_seconds: 60
 
 home_assistant:
   base_url: "http://localhost:8123"
   token: ""
+

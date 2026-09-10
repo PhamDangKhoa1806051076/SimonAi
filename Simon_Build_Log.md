@@ -31,3 +31,14 @@
 - Extended `SimonBrain.ask()` to manage and report current language
 - Added API key validation on startup in `simon/main.py`
 - Documented API key rotation reminder in build log
+
+## 2026-09-11 - JARVIS Edition Upgrade
+- Upgraded AI Brain with OpenAI/Groq Function Calling, auto tool execution loop, and token streaming
+- Added 30 system, utility, vision, smart home, and memory tools to TOOL_REGISTRY
+- Integrated persistent long-term vector memory using ChromaDB
+- Upgraded Edge-TTS audio playback to inline pygame.mixer (eliminated unwanted popup windows)
+- Added ambient noise calibration to SpeechRecognition and continuous voice listening
+- Redesigned Desktop GUI in CustomTkinter with JARVIS/Iron Man styling, Arc reactor glow effects, and Vision controls
+- Integrated computer vision: real-time webcam face presence detection, photo capture, and background greeting watcher
+- Hardened system compatibility for Python 3.13, OpenCV 4.x, and Windows UTF-8 encoding
+- Added config validation, startup diagnostic banners, and CLI command helpers (/help, /tools, /memory, /clear)

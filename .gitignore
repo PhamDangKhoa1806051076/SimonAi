@@ -13,3 +13,7 @@ build/
 dist/
 *.egg-info/
 *.spec
+*.log
+.env*
+!config/settings.yaml
+
