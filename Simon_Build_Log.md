@@ -42,3 +42,6 @@
 - Integrated computer vision: real-time webcam face presence detection, photo capture, and background greeting watcher
 - Hardened system compatibility for Python 3.13, OpenCV 4.x, and Windows UTF-8 encoding
 - Added config validation, startup diagnostic banners, and CLI command helpers (/help, /tools, /memory, /clear)
+- Added CLI arguments `--gui`, `--voice`, `--terminal` in `simon/main.py`
+- Created convenient desktop launcher scripts `run_simon.bat` (interactive menu) and `run_simon_gui.bat` (direct GUI)
+

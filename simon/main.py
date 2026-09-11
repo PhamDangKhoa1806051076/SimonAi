@@ -250,17 +250,27 @@ async def main_async(voice_mode: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    print()
-    print("┌──────────────────────────────────────────────┐")
-    print("│         CHỌN PHƯƠNG THỨC KHỞI ĐỘNG           │")
-    print("│  1: Giao diện dòng lệnh (Text Terminal)     │")
-    print("│  2: Chế độ giọng nói (Voice Mode)            │")
-    print("│  3: Giao diện đồ họa (JARVIS Desktop GUI)    │")
-    print("└──────────────────────────────────────────────┘")
-    try:
-        mode = input("Lựa chọn (1/2/3) [mặc định 3]: ").strip()
-    except Exception:
+    mode = None
+    args = sys.argv[1:]
+    if "--gui" in args or "-g" in args:
         mode = "3"
+    elif "--voice" in args or "-v" in args:
+        mode = "2"
+    elif "--terminal" in args or "--cli" in args or "-t" in args or "-c" in args:
+        mode = "1"
+
+    if not mode:
+        print()
+        print("┌──────────────────────────────────────────────┐")
+        print("│         CHỌN PHƯƠNG THỨC KHỞI ĐỘNG           │")
+        print("│  1: Giao diện dòng lệnh (Text Terminal)     │")
+        print("│  2: Chế độ giọng nói (Voice Mode)            │")
+        print("│  3: Giao diện đồ họa (JARVIS Desktop GUI)    │")
+        print("└──────────────────────────────────────────────┘")
+        try:
+            mode = input("Lựa chọn (1/2/3) [mặc định 3]: ").strip()
+        except Exception:
+            mode = "3"
 
     if not mode:
         mode = "3"
@@ -279,3 +289,4 @@ if __name__ == "__main__":
         asyncio.run(main_async(voice_mode=True))
     else:
         asyncio.run(main_async(voice_mode=False))
+
