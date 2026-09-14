@@ -70,6 +70,18 @@ def _run_async(coro):
         return future.result()
 
 
+import uuid
+
+
+def _safe_remove(filepath: Path) -> None:
+    """Safely remove a temporary audio file."""
+    try:
+        if filepath.exists():
+            filepath.unlink(missing_ok=True)
+    except Exception as exc:
+        LOGGER.debug("Could not remove temp audio file %s: %s", filepath, exc)
+
+
 def _play_with_pygame(filepath: str) -> None:
     """Play audio file using pygame.mixer (non-blocking, stoppable)."""
     import pygame
@@ -83,6 +95,12 @@ def _play_with_pygame(filepath: str) -> None:
             pygame.time.wait(50)
     except Exception as exc:
         LOGGER.warning("pygame playback error: %s", exc)
+    finally:
+        try:
+            if hasattr(pygame.mixer.music, "unload"):
+                pygame.mixer.music.unload()
+        except Exception:
+            pass
 
 
 def _play_with_system(filepath: str) -> None:
@@ -120,7 +138,8 @@ def speak(text: str, language: str = "vi") -> None:
     _stop_flag.clear()
 
     with _playback_lock:
-        output_file = Path(tempfile.gettempdir()) / "simon_voice_output.mp3"
+        temp_dir = Path(tempfile.gettempdir())
+        output_file = temp_dir / f"simon_voice_{uuid.uuid4().hex[:8]}.mp3"
         voice = get_voice(language)
 
         try:
@@ -130,12 +149,16 @@ def speak(text: str, language: str = "vi") -> None:
             return
 
         if _stop_flag.is_set():
+            _safe_remove(output_file)
             return
 
-        if _init_mixer():
-            _play_with_pygame(str(output_file))
-        else:
-            _play_with_system(str(output_file))
+        try:
+            if _init_mixer():
+                _play_with_pygame(str(output_file))
+            else:
+                _play_with_system(str(output_file))
+        finally:
+            _safe_remove(output_file)
 
 
 def stop_speaking() -> None:
@@ -143,8 +166,11 @@ def stop_speaking() -> None:
     _stop_flag.set()
     try:
         import pygame
-        if _mixer_initialized and pygame.mixer.music.get_busy():
-            pygame.mixer.music.stop()
+        if _mixer_initialized:
+            if pygame.mixer.music.get_busy():
+                pygame.mixer.music.stop()
+            if hasattr(pygame.mixer.music, "unload"):
+                pygame.mixer.music.unload()
     except Exception:
         pass
 

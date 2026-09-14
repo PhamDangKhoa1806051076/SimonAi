@@ -492,6 +492,10 @@ class SimonGUI:
                     if self.voice_mode:
                         threading.Thread(target=self._speak, args=(payload,), daemon=True).start()
 
+                elif kind == "voice_command":
+                    if not self._is_thinking:
+                        self._inject_command(payload)
+
                 elif kind == "error":
                     self._set_thinking(False)
                     self._show_error(payload)
@@ -516,14 +520,61 @@ class SimonGUI:
                 fg_color=COLORS["btn_primary"],
                 border_color=COLORS["accent_dim"],
             )
-            self._set_status("Voice mode BẬT", COLORS["accent"])
+            self._set_status("Voice mode BẬT (Đang lắng nghe mic...)", COLORS["accent"])
+            self._start_voice_listener()
         else:
+            self._stop_voice_listener()
             self.voice_btn.configure(
                 text="🎤 Voice: TẮT",
                 fg_color=COLORS["bg_card"],
                 border_color=COLORS["border"],
             )
             self._set_status("Voice mode TẮT", COLORS["text_secondary"])
+
+    def _start_voice_listener(self) -> None:
+        """Start continuous speech-to-text listening thread."""
+        self._voice_stop_event = threading.Event()
+        self._voice_thread = threading.Thread(
+            target=self._voice_listen_loop,
+            daemon=True,
+            name="simon-gui-voice",
+        )
+        self._voice_thread.start()
+
+    def _stop_voice_listener(self) -> None:
+        """Stop speech-to-text listening thread."""
+        if hasattr(self, "_voice_stop_event") and self._voice_stop_event:
+            self._voice_stop_event.set()
+            self._voice_stop_event = None
+            self._voice_thread = None
+
+    def _voice_listen_loop(self) -> None:
+        """Continuous background listening loop for GUI voice mode."""
+        from simon.voice.stt import listen
+        from simon.voice.tts import is_speaking
+
+        while hasattr(self, "_voice_stop_event") and self._voice_stop_event and not self._voice_stop_event.is_set():
+            if self._is_thinking or is_speaking():
+                time.sleep(0.4)
+                continue
+            try:
+                text = listen(
+                    timeout=5,
+                    phrase_time_limit=12,
+                    language=self.brain.current_language,
+                    calibrate=False,
+                    calibration_duration=0.3,
+                )
+                if (
+                    text
+                    and hasattr(self, "_voice_stop_event")
+                    and self._voice_stop_event
+                    and not self._voice_stop_event.is_set()
+                    and not is_speaking()
+                ):
+                    self._queue.put(("voice_command", text))
+            except Exception:
+                time.sleep(0.5)
 
     def _speak(self, text: str) -> None:
         """Speak text using TTS in background."""
@@ -605,6 +656,7 @@ class SimonGUI:
 
     def _on_close(self) -> None:
         """Clean shutdown when closing the window."""
+        self._stop_voice_listener()
         if self._face_watcher:
             try:
                 self._face_watcher.stop()

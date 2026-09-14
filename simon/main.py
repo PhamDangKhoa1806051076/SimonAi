@@ -151,10 +151,11 @@ def handle_internal_command(cmd: str, brain: SimonBrain) -> bool:
     return False
 
 
-async def main_async(voice_mode: bool = False) -> None:
+async def main_async(voice_mode: bool = False, brain: Optional[SimonBrain] = None) -> None:
     build_log("Main loop started", f"voice_mode={voice_mode}")
     cfg = load_config()
-    brain = create_brain()
+    if brain is None:
+        brain = create_brain()
     memory = get_memory()
 
     # Optional Vision background watcher
@@ -284,9 +285,9 @@ if __name__ == "__main__":
         except Exception as exc:
             LOGGER.exception("GUI failed to start")
             print(f"Không thể khởi chạy GUI ({exc}), đang chuyển sang Terminal mode...")
-            asyncio.run(main_async(voice_mode=False))
+            asyncio.run(main_async(voice_mode=False, brain=brain))
     elif mode == "2":
-        asyncio.run(main_async(voice_mode=True))
+        asyncio.run(main_async(voice_mode=True, brain=brain))
     else:
-        asyncio.run(main_async(voice_mode=False))
+        asyncio.run(main_async(voice_mode=False, brain=brain))
 

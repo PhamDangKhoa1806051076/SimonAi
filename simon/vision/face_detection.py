@@ -101,6 +101,15 @@ class FaceWatcher:
         self._face_present = False
         self._last_trigger_time = 0.0
         self._last_face_time = 0.0
+        self._last_frame = None
+        self._frame_lock = threading.Lock()
+
+    def get_current_frame(self):
+        """Thread-safely retrieve the latest captured camera frame."""
+        with self._frame_lock:
+            if self._last_frame is not None:
+                return self._last_frame.copy()
+        return None
 
     def _watch(self) -> None:
         """Main watch loop."""
@@ -113,15 +122,17 @@ class FaceWatcher:
             LOGGER.error("FaceWatcher: Cannot open camera %d", self.camera_index)
             return
 
-
         LOGGER.info("FaceWatcher started on camera %d", self.camera_index)
 
         try:
             while self._running:
                 ret, frame = cap.read()
-                if not ret:
+                if not ret or frame is None:
                     time.sleep(self.check_interval)
                     continue
+
+                with self._frame_lock:
+                    self._last_frame = frame.copy()
 
                 gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 faces = FACE_CASCADE.detectMultiScale(
@@ -159,6 +170,8 @@ class FaceWatcher:
                 time.sleep(self.check_interval)
         finally:
             cap.release()
+            with self._frame_lock:
+                self._last_frame = None
             LOGGER.info("FaceWatcher stopped")
 
     def start(self) -> None:
@@ -203,26 +216,43 @@ def set_global_watcher(watcher: Optional[FaceWatcher]) -> None:
     _global_watcher = watcher
 
 
+def _acquire_frame(camera_index: int = 0):
+    """
+    Get a camera frame safely.
+    If FaceWatcher is running, uses its latest frame to avoid camera device lock conflicts.
+    Otherwise opens VideoCapture temporarily.
+    Returns (frame, cap_to_release_or_None).
+    """
+    global _global_watcher
+    if _global_watcher and _global_watcher.is_running:
+        for _ in range(15):
+            frame = _global_watcher.get_current_frame()
+            if frame is not None:
+                return frame, None
+            time.sleep(0.1)
+
+    cap = cv2.VideoCapture(camera_index)
+    if not cap.isOpened():
+        return None, None
+
+    for _ in range(6):
+        ret, frame = cap.read()
+        if ret and frame is not None:
+            return frame, cap
+        time.sleep(0.04)
+
+    return None, cap
+
+
 def check_camera_for_face(camera_index: int = 0) -> str:
     """Quét webcam ngay lập tức để kiểm tra xem có người/khuôn mặt ở trước máy tính không."""
     if FACE_CASCADE is None:
         return "Tính năng nhận diện khuôn mặt chưa sẵn sàng."
 
-    cap = cv2.VideoCapture(camera_index)
-    if not cap.isOpened():
-        return "Không thể truy cập camera. Vui lòng kiểm tra webcam có đang kết nối hoặc bị ứng dụng khác chiếm giữ không."
-
+    frame, cap = _acquire_frame(camera_index)
     try:
-        ret = False
-        frame = None
-        for _ in range(5):
-            ret, frame = cap.read()
-            if ret:
-                break
-            time.sleep(0.05)
-
-        if not ret or frame is None:
-            return "Không lấy được hình ảnh từ camera."
+        if frame is None:
+            return "Không thể truy cập camera. Vui lòng kiểm tra webcam có đang kết nối không."
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = FACE_CASCADE.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(60, 60))
@@ -237,22 +267,16 @@ def check_camera_for_face(camera_index: int = 0) -> str:
         LOGGER.exception("Error checking camera for face")
         return f"Lỗi khi quét camera: {exc}"
     finally:
-        cap.release()
+        if cap is not None:
+            cap.release()
 
 
 def capture_webcam_photo(camera_index: int = 0) -> str:
     """Chụp ảnh từ webcam máy tính và lưu vào Desktop."""
-    cap = cv2.VideoCapture(camera_index)
-    if not cap.isOpened():
-        return "Không thể mở camera để chụp ảnh."
-
+    frame, cap = _acquire_frame(camera_index)
     try:
-        for _ in range(8):
-            ret, frame = cap.read()
-            time.sleep(0.04)
-
-        if not ret or frame is None:
-            return "Không thể chụp ảnh từ camera."
+        if frame is None:
+            return "Không thể mở camera để chụp ảnh."
 
         desktop = Path.home() / "Desktop"
         if not desktop.exists():
@@ -268,7 +292,8 @@ def capture_webcam_photo(camera_index: int = 0) -> str:
         LOGGER.exception("Error capturing webcam photo")
         return f"Lỗi chụp ảnh webcam: {exc}"
     finally:
-        cap.release()
+        if cap is not None:
+            cap.release()
 
 
 def toggle_face_watcher(enable: bool, on_detect_callback: Optional[Callable[[], None]] = None) -> str:

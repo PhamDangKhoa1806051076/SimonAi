@@ -246,39 +246,52 @@ class SimonBrain:
             choice = completion.choices[0]
             message = choice.message
 
-            if message.tool_calls:
+            if not message.tool_calls:
+                # If no tools were called in the first pass, we already have the full reply!
+                reply = (message.content or "").strip()
+                if not reply:
+                    reply = "Tôi đã xử lý xong, Chủ nhân." if self.current_language == "vi" else "Done, Sir."
+
+                self._history.append({"role": "user", "content": user_input})
+                self._history.append({"role": "assistant", "content": reply})
+
+                # Stream out the response tokens/words smoothly
+                import re
+                chunks = re.findall(r"\S+\s*|\s+", reply)
+                for chunk in chunks:
+                    yield chunk
+                return
+
+            # Tool calls present: append assistant message and execute tools
+            messages.append({
+                "role": "assistant",
+                "content": message.content or "",
+                "tool_calls": [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": tc.function.arguments,
+                        },
+                    }
+                    for tc in message.tool_calls
+                ],
+            })
+
+            for tool_call in message.tool_calls:
+                func_name = tool_call.function.name
+                try:
+                    func_args = json.loads(tool_call.function.arguments)
+                except json.JSONDecodeError:
+                    func_args = {}
+                result = self._execute_tool(func_name, func_args)
                 messages.append({
-                    "role": "assistant",
-                    "content": message.content or "",
-                    "tool_calls": [
-                        {
-                            "id": tc.id,
-                            "type": "function",
-                            "function": {
-                                "name": tc.function.name,
-                                "arguments": tc.function.arguments,
-                            },
-                        }
-                        for tc in message.tool_calls
-                    ],
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": result,
                 })
-
-                for tool_call in message.tool_calls:
-                    func_name = tool_call.function.name
-                    try:
-                        func_args = json.loads(tool_call.function.arguments)
-                    except json.JSONDecodeError:
-                        func_args = {}
-                    result = self._execute_tool(func_name, func_args)
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call.id,
-                        "content": result,
-                    })
-                continue
-
-            # No more tool calls – now stream the final response
-            break
+            # Continue loop to process tool results or stream final reply
 
         # Stream the final response
         try:

@@ -15,7 +15,7 @@ import psutil
 import pyautogui
 
 LOGGER = logging.getLogger("simon.hands")
-pyautogui.FAILSAFE = True
+pyautogui.FAILSAFE = False
 
 
 # ------------------------------------------------------------------
@@ -83,14 +83,23 @@ def check_ram() -> str:
     )
 
 
+def _get_system_disk_path() -> str:
+    """Get system disk root path."""
+    if platform.system() == "Windows":
+        return os.environ.get("SystemDrive", "C:") + "\\"
+    return "/"
+
+
 def check_disk() -> str:
     """Get disk usage for the main drive."""
-    disk = psutil.disk_usage("/")
+    drive = _get_system_disk_path()
+    disk = psutil.disk_usage(drive)
     used_gb = disk.used / (1024 ** 3)
     total_gb = disk.total / (1024 ** 3)
     free_gb = disk.free / (1024 ** 3)
+    drive_label = f" ({drive})" if platform.system() == "Windows" else ""
     return (
-        f"Ổ đĩa: {disk.percent}% đã dùng "
+        f"Ổ đĩa{drive_label}: {disk.percent}% đã dùng "
         f"({used_gb:.1f} GB / {total_gb:.1f} GB), "
         f"còn trống {free_gb:.1f} GB"
     )
@@ -100,7 +109,7 @@ def check_system() -> str:
     """Get comprehensive system information."""
     cpu = psutil.cpu_percent(interval=1)
     mem = psutil.virtual_memory()
-    disk = psutil.disk_usage("/")
+    disk = psutil.disk_usage(_get_system_disk_path())
     boot = datetime.datetime.fromtimestamp(psutil.boot_time())
     uptime = datetime.datetime.now() - boot
 
@@ -211,12 +220,18 @@ def take_screenshot() -> str:
 # ------------------------------------------------------------------
 
 def type_text(text: str) -> str:
-    """Type text using keyboard automation."""
+    """Type text using keyboard automation. Handles Unicode/Vietnamese characters via clipboard."""
     try:
-        pyautogui.typewrite(text, interval=0.02)
+        import pyperclip
+        pyperclip.copy(text)
+        pyautogui.hotkey("ctrl", "v")
         return f"Đã gõ: {text}"
     except Exception as exc:
-        return f"Lỗi gõ phím: {exc}"
+        try:
+            pyautogui.typewrite(text, interval=0.02)
+            return f"Đã gõ: {text}"
+        except Exception:
+            return f"Lỗi gõ phím: {exc}"
 
 
 def press_key(key: str) -> str:

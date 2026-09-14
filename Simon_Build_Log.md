@@ -45,3 +45,13 @@
 - Added CLI arguments `--gui`, `--voice`, `--terminal` in `simon/main.py`
 - Created convenient desktop launcher scripts `run_simon.bat` (interactive menu) and `run_simon_gui.bat` (direct GUI)
 
+## 2026-09-14 - System Hardening & Bug Fixes
+- Fixed TTS Windows file lock crash (`PermissionError: [Errno 13]`) on consecutive speech by using unique temporary audio filenames and `pygame.mixer.music.unload()`
+- Fixed Webcam/OpenCV device conflict: integrated thread-safe frame sharing into `FaceWatcher` so `check_camera_for_face()` and `capture_webcam_photo()` work seamlessly while watcher runs
+- Completed GUI voice mode: connected continuous background Speech-to-Text (`listen_continuous`) with echo suppression to the Desktop GUI
+- Optimized `SimonBrain.ask_stream()`: removed redundant duplicate LLM API request for non-tool queries, reducing response latency from 12.2s to 1.2s (10x faster)
+- Fixed duplicate `create_brain()` initialization and redundant API validation pings on startup
+- Enhanced `type_text` tool with clipboard-based Unicode support for Vietnamese diacritics and disabled PyAutoGUI corner failsafe crashes
+- Standardized `check_disk()` to Windows system drive (`C:\`) and anchored `ChromaDB` storage to project root directory
+- Added regression test suite `scripts/test_system_integrity.py` covering all 6 core subsystems
+

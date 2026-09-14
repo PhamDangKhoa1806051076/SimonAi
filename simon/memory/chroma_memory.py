@@ -6,21 +6,34 @@ Stores conversations and personal info as vector embeddings for semantic search.
 import datetime
 import hashlib
 import logging
+import sys
 from pathlib import Path
 from typing import Optional
 
 LOGGER = logging.getLogger("simon.memory")
 
+if getattr(sys, "frozen", False):
+    BASE_DIR = Path(sys.executable).resolve().parent
+else:
+    BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+DEFAULT_PERSIST_DIR = str(BASE_DIR / "chroma_db")
+
 
 class SimonMemory:
     """ChromaDB-based persistent memory for Simon AI."""
 
-    def __init__(self, persist_dir: str = "chroma_db", collection_name: str = "simon_memory") -> None:
+    def __init__(self, persist_dir: Optional[str] = None, collection_name: str = "simon_memory") -> None:
         self._available = False
         try:
             import chromadb
 
-            persist_path = Path(persist_dir)
+            if not persist_dir:
+                persist_path = Path(DEFAULT_PERSIST_DIR)
+            else:
+                p = Path(persist_dir)
+                persist_path = p if p.is_absolute() else (BASE_DIR / p)
+
             persist_path.mkdir(parents=True, exist_ok=True)
 
             self.client = chromadb.PersistentClient(path=str(persist_path))
@@ -29,7 +42,7 @@ class SimonMemory:
                 metadata={"hnsw:space": "cosine"},
             )
             self._available = True
-            LOGGER.info("Memory initialized: %s (%d entries)", persist_dir, self.collection.count())
+            LOGGER.info("Memory initialized: %s (%d entries)", persist_path, self.collection.count())
         except Exception as exc:
             LOGGER.warning("ChromaDB not available, memory disabled: %s", exc)
 
@@ -169,7 +182,7 @@ class SimonMemory:
 _memory_instance: Optional[SimonMemory] = None
 
 
-def get_memory(persist_dir: str = "chroma_db", collection_name: str = "simon_memory") -> SimonMemory:
+def get_memory(persist_dir: Optional[str] = None, collection_name: str = "simon_memory") -> SimonMemory:
     """Get or initialize the global SimonMemory instance."""
     global _memory_instance
     if _memory_instance is None:

@@ -16,3 +16,4 @@ python-dotenv
 customtkinter
 pygame
 psutil
+pyperclip
